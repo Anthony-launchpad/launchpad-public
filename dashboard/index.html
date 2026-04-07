@@ -301,98 +301,115 @@
   </div>
 </div>
 
-<!-- Row 2: Client Health Table + AI Pipeline -->
+<!-- Row 2: Client Health Table + Priority Actions -->
 <div class="grid">
   <div class="card span-3">
     <div class="card-header">
       <h2>Client Health</h2>
-      <span class="badge badge-green">All Active</span>
+      <span class="badge badge-yellow" id="month-progress-badge"></span>
     </div>
     <table>
       <thead>
         <tr>
           <th>Client</th>
           <th>Package</th>
-          <th>Industry</th>
           <th>Ad Spend</th>
-          <th>Status</th>
+          <th style="width: 200px;">Deliverable Health</th>
+          <th>Progress</th>
         </tr>
       </thead>
-      <tbody>
-        <tr><td>Afshar Law</td><td>Essential Growth</td><td>Law</td><td>$1,500</td><td><span class="status-dot dot-green"></span>Active</td></tr>
-        <tr><td>Arby's Food Truck</td><td>Essential Growth</td><td>Food</td><td>$500</td><td><span class="status-dot dot-green"></span>Active</td></tr>
-        <tr><td>Brand With Us</td><td>Essential Growth</td><td>Printing</td><td>—</td><td><span class="status-dot dot-green"></span>Active</td></tr>
-        <tr><td>Continental Currency</td><td>Ultimate Builder</td><td>Finance</td><td>$5,000</td><td><span class="status-dot dot-green"></span>Active</td></tr>
-        <tr><td>DHDA</td><td>Ads Only</td><td>—</td><td>—</td><td><span class="status-dot dot-green"></span>Active</td></tr>
-        <tr><td>DRG</td><td>Ala Carte</td><td>Food</td><td>—</td><td><span class="status-dot dot-green"></span>Active</td></tr>
-        <tr><td>Durango HVAC</td><td>Ads Only</td><td>HVAC</td><td>$500</td><td><span class="status-dot dot-green"></span>Active</td></tr>
-        <tr><td>Matsuda Nadig Law</td><td>Comprehensive</td><td>Law</td><td>$4,000</td><td><span class="status-dot dot-green"></span>Active</td></tr>
-        <tr><td>MN Van Law</td><td>Comprehensive</td><td>Law</td><td>$1,500</td><td><span class="status-dot dot-green"></span>Active</td></tr>
-        <tr><td>Muller Masks</td><td>Essential Growth</td><td>—</td><td>$1,000</td><td><span class="status-dot dot-green"></span>Active</td></tr>
-        <tr><td>Sobel Westex</td><td>Essential Growth</td><td>—</td><td>$2,000</td><td><span class="status-dot dot-green"></span>Active</td></tr>
-        <tr><td>Taco Bell Cantinas</td><td>Essential Growth</td><td>—</td><td>—</td><td><span class="status-dot dot-green"></span>Active</td></tr>
-        <tr><td>Toro Taxes Franchise</td><td>Custom</td><td>—</td><td>$8,400</td><td><span class="status-dot dot-green"></span>Active</td></tr>
-        <tr><td>Upbeat Health</td><td>Custom</td><td>—</td><td>—</td><td><span class="status-dot dot-green"></span>Active</td></tr>
-        <tr><td>Launchpad</td><td>Custom</td><td>Marketing</td><td>—</td><td><span class="status-dot dot-green"></span>Active</td></tr>
-      </tbody>
+      <tbody id="client-table"></tbody>
     </table>
+    <div style="margin-top: 12px; font-size: 11px; color: #444; display: flex; gap: 16px;">
+      <span><span class="status-dot dot-green" style="vertical-align: middle;"></span> On track</span>
+      <span><span class="status-dot dot-yellow" style="vertical-align: middle;"></span> Behind pace</span>
+      <span><span class="status-dot dot-red" style="vertical-align: middle;"></span> At risk</span>
+      <span style="color: #555;">Bar = % complete vs where you should be this week in the month</span>
+    </div>
   </div>
 
   <div class="card">
     <div class="card-header">
-      <h2>Automation Schedule</h2>
-    </div>
-    <div class="schedule-item">
-      <span class="schedule-time">8:33 AM</span>
-      <span class="schedule-label">Morning Briefing</span>
-      <span class="schedule-status badge-blue badge">Slack</span>
-    </div>
-    <div class="schedule-item">
-      <span class="schedule-time">9:07 AM</span>
-      <span class="schedule-label">Task Dispatcher</span>
-      <span class="schedule-status badge-green badge">Hourly</span>
-    </div>
-    <div class="schedule-item">
-      <span class="schedule-time">9:13 AM</span>
-      <span class="schedule-label">Notion Sync</span>
-      <span class="schedule-status badge-yellow badge">2x/day</span>
-    </div>
-    <div class="schedule-item">
-      <span class="schedule-time">2:13 PM</span>
-      <span class="schedule-label">Notion Sync</span>
-      <span class="schedule-status badge-yellow badge">2x/day</span>
-    </div>
-    <div class="schedule-item">
-      <span class="schedule-time">5:47 PM</span>
-      <span class="schedule-label">Brain Dump</span>
-      <span class="schedule-status badge-blue badge">Daily</span>
+      <h2>Priority Actions</h2>
+      <span class="badge badge-red">Needs Attention</span>
     </div>
 
-    <div style="margin-top: 24px;">
+    <div class="action-item" style="padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.04);">
+      <div style="font-size: 12px; color: #F43F5E; font-weight: 600; margin-bottom: 4px;">OVERDUE</div>
+      <div style="font-size: 13px; color: #ccc;">5 deliverables waiting for client review</div>
+      <div style="font-size: 11px; color: #666; margin-top: 2px;">Follow up with clients for approvals</div>
+    </div>
+
+    <div class="action-item" style="padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.04);">
+      <div style="font-size: 12px; color: #EAB308; font-weight: 600; margin-bottom: 4px;">AI TASK — NEEDS REVIEW</div>
+      <div style="font-size: 13px; color: #ccc;">AI-1: Marketing with Claude carousel</div>
+      <div style="font-size: 11px; color: #666; margin-top: 2px;">Brand Compliance flagged 2 slides for revision</div>
+    </div>
+
+    <div class="action-item" style="padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.04);">
+      <div style="font-size: 12px; color: #EAB308; font-weight: 600; margin-bottom: 4px;">CONTEXT GAPS</div>
+      <div style="font-size: 13px; color: #ccc;">Client context audit — deadline Apr 9</div>
+      <div style="font-size: 11px; color: #666; margin-top: 2px;">Emigen filling gaps. Abril + Cynthia support needed.</div>
+    </div>
+
+    <div class="action-item" style="padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.04);">
+      <div style="font-size: 12px; color: #3B82F6; font-weight: 600; margin-bottom: 4px;">WAITING ON</div>
+      <div style="font-size: 13px; color: #ccc;">Google Drive shared access for Apollo</div>
+      <div style="font-size: 11px; color: #666; margin-top: 2px;">Abril adding apollo@launchpadbizdev.com</div>
+    </div>
+
+    <div class="action-item" style="padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.04);">
+      <div style="font-size: 12px; color: #3B82F6; font-weight: 600; margin-bottom: 4px;">WAITING ON</div>
+      <div style="font-size: 13px; color: #ccc;">Abril's onboarding process feedback</div>
+      <div style="font-size: 11px; color: #666; margin-top: 2px;">Sent Slack DM today — need her current workflow</div>
+    </div>
+
+    <div style="margin-top: 20px;">
       <div class="card-header">
-        <h2>AI Pipeline</h2>
+        <h2>From Weekly Accountability</h2>
       </div>
-      <div class="ai-pipeline">
-        <div class="pipeline-stage" style="background: rgba(78,205,196,0.15); color: #4ECDC4;">Research</div>
-        <span class="pipeline-arrow">→</span>
-        <div class="pipeline-stage" style="background: rgba(168,85,247,0.15); color: #A855F7;">Create</div>
-        <span class="pipeline-arrow">→</span>
-        <div class="pipeline-stage" style="background: rgba(244,63,94,0.15); color: #F43F5E;">Review</div>
-        <span class="pipeline-arrow">→</span>
-        <div class="pipeline-stage" style="background: rgba(34,197,94,0.15); color: #22C55E;">Post</div>
+      <div class="action-item" style="padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.04);">
+        <div style="font-size: 13px; color: #ccc;">Q2 goals: Lock in 3 new clients</div>
+        <div style="font-size: 11px; color: #666; margin-top: 2px;">Current: 0/3 — need to activate sales pipeline</div>
+      </div>
+      <div class="action-item" style="padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.04);">
+        <div style="font-size: 13px; color: #ccc;">LP University launch campaign</div>
+        <div style="font-size: 11px; color: #666; margin-top: 2px;">FREE offer live, $800 Meta ads running, signups needed</div>
+      </div>
+      <div class="action-item" style="padding: 8px 0;">
+        <div style="font-size: 13px; color: #ccc;">AI OS build — test run pending</div>
+        <div style="font-size: 11px; color: #666; margin-top: 2px;">Infrastructure done. First live task dispatch needed.</div>
       </div>
     </div>
 
-    <div style="margin-top: 24px;">
+    <div style="margin-top: 20px;">
       <div class="card-header">
-        <h2>Current AI Task</h2>
+        <h2>Automation Schedule</h2>
       </div>
-      <div style="font-size: 13px; color: #ccc; line-height: 1.6;">
-        <strong style="color: #A855F7;">AI-1:</strong> Marketing with Claude<br>
-        <span style="color: #888;">Client:</span> Launchpad<br>
-        <span style="color: #888;">Agent:</span> Brand Compliance<br>
-        <span style="color: #888;">Status:</span> <span style="color: #A855F7;">In Review</span><br>
-        <span style="color: #888;">Content:</span> Carousel (IG/FB/TT/LI)
+      <div class="schedule-item">
+        <span class="schedule-time">8:33 AM</span>
+        <span class="schedule-label">Morning Briefing</span>
+        <span class="schedule-status badge-blue badge">Slack</span>
+      </div>
+      <div class="schedule-item">
+        <span class="schedule-time">9:07 AM</span>
+        <span class="schedule-label">Task Dispatcher</span>
+        <span class="schedule-status badge-green badge">Hourly</span>
+      </div>
+      <div class="schedule-item">
+        <span class="schedule-time">9:13 AM</span>
+        <span class="schedule-label">Notion Sync</span>
+        <span class="schedule-status badge-yellow badge">2x/day</span>
+      </div>
+      <div class="schedule-item">
+        <span class="schedule-time">2:13 PM</span>
+        <span class="schedule-label">Notion Sync</span>
+        <span class="schedule-status badge-yellow badge">2x/day</span>
+      </div>
+      <div class="schedule-item">
+        <span class="schedule-time">5:47 PM</span>
+        <span class="schedule-label">Brain Dump</span>
+        <span class="schedule-status badge-blue badge">Daily</span>
       </div>
     </div>
   </div>
@@ -495,6 +512,70 @@ function updateTime() {
 }
 updateTime();
 setInterval(updateTime, 60000);
+
+// Month progress calculation
+const now = new Date();
+const dayOfMonth = now.getDate();
+const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+const monthProgress = Math.round((dayOfMonth / daysInMonth) * 100);
+const weekNum = Math.ceil(dayOfMonth / 7);
+document.getElementById('month-progress-badge').textContent = `Week ${weekNum} — ${monthProgress}% through month`;
+
+// Client health data: [name, package, adSpend, totalDeliverables, doneDeliverables]
+const clients = [
+  ['Afshar Law', 'Essential Growth', '$1,500', 9, 3],
+  ["Arby's Food Truck", 'Essential Growth', '$500', 31, 25],
+  ['Brand With Us', 'Essential Growth', '—', 0, 0],
+  ['Continental Currency', 'Ultimate Builder', '$5,000', 0, 0],
+  ['DHDA', 'Ads Only', '—', 2, 2],
+  ['DRG', 'Ala Carte', '—', 6, 6],
+  ['Durango HVAC', 'Ads Only', '$500', 0, 0],
+  ['Matsuda Nadig Law', 'Comprehensive', '$4,000', 4, 4],
+  ['MN Van Law', 'Comprehensive', '$1,500', 0, 0],
+  ['Muller Masks', 'Essential Growth', '$1,000', 0, 0],
+  ['Sobel Westex', 'Essential Growth', '$2,000', 0, 0],
+  ['Taco Bell Cantinas', 'Essential Growth', '—', 0, 0],
+  ['Toro Taxes Franchise', 'Custom', '$8,400', 2, 2],
+  ['Upbeat Health', 'Custom', '—', 0, 0],
+  ['Launchpad', 'Custom', '—', 3, 2],
+];
+
+function getHealthScore(total, done, monthPct) {
+  if (total === 0) return { pct: 0, color: '#F43F5E', label: 'No deliverables', status: 'red' };
+  const completionPct = Math.round((done / total) * 100);
+  // Compare completion to where we are in the month
+  const diff = completionPct - monthPct;
+  let color, status;
+  if (diff >= -10) { color = '#22C55E'; status = 'green'; }
+  else if (diff >= -30) { color = '#EAB308'; status = 'yellow'; }
+  else { color = '#F43F5E'; status = 'red'; }
+  return { pct: completionPct, color, label: `${done}/${total} (${completionPct}%)`, status };
+}
+
+const tbody = document.getElementById('client-table');
+clients.forEach(([name, pkg, spend, total, done]) => {
+  const health = getHealthScore(total, done, monthProgress);
+  const tr = document.createElement('tr');
+  tr.innerHTML = `
+    <td><strong style="color: #eee;">${name}</strong></td>
+    <td>${pkg}</td>
+    <td>${spend}</td>
+    <td>
+      <div style="display: flex; align-items: center; gap: 8px;">
+        <div class="progress-bar" style="flex: 1; height: 8px;">
+          <div class="progress-fill" style="width: ${health.pct}%; background: ${health.color};"></div>
+        </div>
+        <span style="font-size: 11px; color: ${health.color}; min-width: 65px; text-align: right;">${health.label}</span>
+      </div>
+      ${health.pct === 0 ? '<div style="font-size: 10px; color: #F43F5E; margin-top: 2px;">No deliverables tracked</div>' : ''}
+    </td>
+    <td>
+      <span class="status-dot dot-${health.status}"></span>
+      ${health.status === 'green' ? 'On track' : health.status === 'yellow' ? 'Behind' : 'At risk'}
+    </td>
+  `;
+  tbody.appendChild(tr);
+});
 </script>
 </body>
 </html>
