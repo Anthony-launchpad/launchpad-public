@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LaunchPad Mission Control</title>
+<meta http-equiv="refresh" content="300">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: #0a0a0f;
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif;
+    color: #fff;
+    padding: 24px;
+    min-height: 100vh;
+  }
+
+  .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+  }
+  .header h1 {
+    font-size: 20px;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+  }
+  .header h1 span { color: #FF6B35; }
+  .header .date {
+    font-size: 13px;
+    color: #555;
+  }
+  .header .pulse {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    background: #22C55E;
+    border-radius: 50%;
+    margin-right: 8px;
+    animation: pulse 2s infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+  }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+
+  .card {
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 12px;
+    padding: 20px;
+  }
+  .card.span-2 { grid-column: span 2; }
+  .card.span-3 { grid-column: span 3; }
+  .card.span-4 { grid-column: span 4; }
+
+  .card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+  }
+  .card-header h2 {
+    font-size: 13px;
+    font-weight: 600;
+    color: #888;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+  .card-header .badge {
+    font-size: 11px;
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-weight: 500;
+  }
+  .badge-green { background: rgba(34,197,94,0.15); color: #22C55E; }
+  .badge-yellow { background: rgba(234,179,8,0.15); color: #EAB308; }
+  .badge-red { background: rgba(244,63,94,0.15); color: #F43F5E; }
+  .badge-blue { background: rgba(59,130,246,0.15); color: #3B82F6; }
+
+  .big-number {
+    font-size: 48px;
+    font-weight: 700;
+    line-height: 1;
+    margin-bottom: 4px;
+  }
+  .big-label {
+    font-size: 13px;
+    color: #666;
+  }
+
+  .stat-row {
+    display: flex;
+    gap: 24px;
+    flex-wrap: wrap;
+  }
+  .stat {
+    flex: 1;
+    min-width: 80px;
+  }
+  .stat-value {
+    font-size: 28px;
+    font-weight: 700;
+    line-height: 1.2;
+  }
+  .stat-label {
+    font-size: 11px;
+    color: #666;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .color-green { color: #22C55E; }
+  .color-yellow { color: #EAB308; }
+  .color-red { color: #F43F5E; }
+  .color-blue { color: #3B82F6; }
+  .color-purple { color: #A855F7; }
+  .color-orange { color: #FF6B35; }
+  .color-dim { color: #444; }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  th {
+    text-align: left;
+    font-size: 11px;
+    font-weight: 600;
+    color: #555;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding: 8px 12px;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+  }
+  td {
+    font-size: 13px;
+    padding: 10px 12px;
+    border-bottom: 1px solid rgba(255,255,255,0.03);
+    color: #ccc;
+  }
+  tr:hover td { background: rgba(255,255,255,0.02); }
+
+  .status-dot {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    margin-right: 6px;
+  }
+  .dot-green { background: #22C55E; }
+  .dot-yellow { background: #EAB308; }
+  .dot-red { background: #F43F5E; }
+  .dot-blue { background: #3B82F6; }
+  .dot-gray { background: #444; }
+
+  .progress-bar {
+    height: 6px;
+    background: rgba(255,255,255,0.06);
+    border-radius: 3px;
+    overflow: hidden;
+    margin-top: 8px;
+  }
+  .progress-fill {
+    height: 100%;
+    border-radius: 3px;
+    transition: width 0.5s ease;
+  }
+
+  .ai-pipeline {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 12px;
+  }
+  .pipeline-stage {
+    flex: 1;
+    text-align: center;
+    padding: 8px;
+    border-radius: 8px;
+    font-size: 11px;
+    font-weight: 600;
+  }
+  .pipeline-arrow {
+    color: #333;
+    font-size: 16px;
+  }
+
+  .schedule-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 0;
+    border-bottom: 1px solid rgba(255,255,255,0.03);
+    font-size: 13px;
+  }
+  .schedule-item:last-child { border-bottom: none; }
+  .schedule-time { color: #666; font-variant-numeric: tabular-nums; }
+  .schedule-label { color: #ccc; }
+  .schedule-status { font-size: 11px; }
+
+  .footer {
+    margin-top: 24px;
+    padding-top: 16px;
+    border-top: 1px solid rgba(255,255,255,0.06);
+    display: flex;
+    justify-content: space-between;
+    font-size: 11px;
+    color: #333;
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1><span>LaunchPad</span> Mission Control</h1>
+  <div class="date">
+    <span class="pulse"></span>
+    <span id="datetime"></span>
+  </div>
+</div>
+
+<!-- Row 1: Key Metrics -->
+<div class="grid">
+  <div class="card">
+    <div class="card-header">
+      <h2>Active Clients</h2>
+      <span class="badge badge-green">Healthy</span>
+    </div>
+    <div class="big-number color-green">15</div>
+    <div class="big-label">+ 2 onboarding</div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <h2>Ad Spend / Month</h2>
+    </div>
+    <div class="big-number color-orange">$24.4k</div>
+    <div class="big-label">across 10 clients</div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <h2>Deliverables — April</h2>
+      <span class="badge badge-yellow">Week 2</span>
+    </div>
+    <div class="stat-row">
+      <div class="stat">
+        <div class="stat-value color-green">81</div>
+        <div class="stat-label">Done</div>
+      </div>
+      <div class="stat">
+        <div class="stat-value color-yellow">1</div>
+        <div class="stat-label">In Progress</div>
+      </div>
+      <div class="stat">
+        <div class="stat-value color-dim">8</div>
+        <div class="stat-label">Not Started</div>
+      </div>
+      <div class="stat">
+        <div class="stat-value color-blue">5</div>
+        <div class="stat-label">Awaiting Review</div>
+      </div>
+    </div>
+    <div class="progress-bar">
+      <div class="progress-fill" style="width: 81%; background: linear-gradient(90deg, #22C55E, #4ADE80);"></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <h2>AI Team Board</h2>
+      <span class="badge badge-blue">1 Active</span>
+    </div>
+    <div class="stat-row">
+      <div class="stat">
+        <div class="stat-value color-dim">0</div>
+        <div class="stat-label">Queued</div>
+      </div>
+      <div class="stat">
+        <div class="stat-value color-blue">0</div>
+        <div class="stat-label">In Progress</div>
+      </div>
+      <div class="stat">
+        <div class="stat-value color-purple">1</div>
+        <div class="stat-label">In Review</div>
+      </div>
+      <div class="stat">
+        <div class="stat-value color-red">0</div>
+        <div class="stat-label">Blocked</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Row 2: Client Health Table + AI Pipeline -->
+<div class="grid">
+  <div class="card span-3">
+    <div class="card-header">
+      <h2>Client Health</h2>
+      <span class="badge badge-green">All Active</span>
+    </div>
+    <table>
+      <thead>
+        <tr>
+          <th>Client</th>
+          <th>Package</th>
+          <th>Industry</th>
+          <th>Ad Spend</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>Afshar Law</td><td>Essential Growth</td><td>Law</td><td>$1,500</td><td><span class="status-dot dot-green"></span>Active</td></tr>
+        <tr><td>Arby's Food Truck</td><td>Essential Growth</td><td>Food</td><td>$500</td><td><span class="status-dot dot-green"></span>Active</td></tr>
+        <tr><td>Brand With Us</td><td>Essential Growth</td><td>Printing</td><td>—</td><td><span class="status-dot dot-green"></span>Active</td></tr>
+        <tr><td>Continental Currency</td><td>Ultimate Builder</td><td>Finance</td><td>$5,000</td><td><span class="status-dot dot-green"></span>Active</td></tr>
+        <tr><td>DHDA</td><td>Ads Only</td><td>—</td><td>—</td><td><span class="status-dot dot-green"></span>Active</td></tr>
+        <tr><td>DRG</td><td>Ala Carte</td><td>Food</td><td>—</td><td><span class="status-dot dot-green"></span>Active</td></tr>
+        <tr><td>Durango HVAC</td><td>Ads Only</td><td>HVAC</td><td>$500</td><td><span class="status-dot dot-green"></span>Active</td></tr>
+        <tr><td>Matsuda Nadig Law</td><td>Comprehensive</td><td>Law</td><td>$4,000</td><td><span class="status-dot dot-green"></span>Active</td></tr>
+        <tr><td>MN Van Law</td><td>Comprehensive</td><td>Law</td><td>$1,500</td><td><span class="status-dot dot-green"></span>Active</td></tr>
+        <tr><td>Muller Masks</td><td>Essential Growth</td><td>—</td><td>$1,000</td><td><span class="status-dot dot-green"></span>Active</td></tr>
+        <tr><td>Sobel Westex</td><td>Essential Growth</td><td>—</td><td>$2,000</td><td><span class="status-dot dot-green"></span>Active</td></tr>
+        <tr><td>Taco Bell Cantinas</td><td>Essential Growth</td><td>—</td><td>—</td><td><span class="status-dot dot-green"></span>Active</td></tr>
+        <tr><td>Toro Taxes Franchise</td><td>Custom</td><td>—</td><td>$8,400</td><td><span class="status-dot dot-green"></span>Active</td></tr>
+        <tr><td>Upbeat Health</td><td>Custom</td><td>—</td><td>—</td><td><span class="status-dot dot-green"></span>Active</td></tr>
+        <tr><td>Launchpad</td><td>Custom</td><td>Marketing</td><td>—</td><td><span class="status-dot dot-green"></span>Active</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <h2>Automation Schedule</h2>
+    </div>
+    <div class="schedule-item">
+      <span class="schedule-time">8:33 AM</span>
+      <span class="schedule-label">Morning Briefing</span>
+      <span class="schedule-status badge-blue badge">Slack</span>
+    </div>
+    <div class="schedule-item">
+      <span class="schedule-time">9:07 AM</span>
+      <span class="schedule-label">Task Dispatcher</span>
+      <span class="schedule-status badge-green badge">Hourly</span>
+    </div>
+    <div class="schedule-item">
+      <span class="schedule-time">9:13 AM</span>
+      <span class="schedule-label">Notion Sync</span>
+      <span class="schedule-status badge-yellow badge">2x/day</span>
+    </div>
+    <div class="schedule-item">
+      <span class="schedule-time">2:13 PM</span>
+      <span class="schedule-label">Notion Sync</span>
+      <span class="schedule-status badge-yellow badge">2x/day</span>
+    </div>
+    <div class="schedule-item">
+      <span class="schedule-time">5:47 PM</span>
+      <span class="schedule-label">Brain Dump</span>
+      <span class="schedule-status badge-blue badge">Daily</span>
+    </div>
+
+    <div style="margin-top: 24px;">
+      <div class="card-header">
+        <h2>AI Pipeline</h2>
+      </div>
+      <div class="ai-pipeline">
+        <div class="pipeline-stage" style="background: rgba(78,205,196,0.15); color: #4ECDC4;">Research</div>
+        <span class="pipeline-arrow">→</span>
+        <div class="pipeline-stage" style="background: rgba(168,85,247,0.15); color: #A855F7;">Create</div>
+        <span class="pipeline-arrow">→</span>
+        <div class="pipeline-stage" style="background: rgba(244,63,94,0.15); color: #F43F5E;">Review</div>
+        <span class="pipeline-arrow">→</span>
+        <div class="pipeline-stage" style="background: rgba(34,197,94,0.15); color: #22C55E;">Post</div>
+      </div>
+    </div>
+
+    <div style="margin-top: 24px;">
+      <div class="card-header">
+        <h2>Current AI Task</h2>
+      </div>
+      <div style="font-size: 13px; color: #ccc; line-height: 1.6;">
+        <strong style="color: #A855F7;">AI-1:</strong> Marketing with Claude<br>
+        <span style="color: #888;">Client:</span> Launchpad<br>
+        <span style="color: #888;">Agent:</span> Brand Compliance<br>
+        <span style="color: #888;">Status:</span> <span style="color: #A855F7;">In Review</span><br>
+        <span style="color: #888;">Content:</span> Carousel (IG/FB/TT/LI)
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Row 3: Package Distribution + Quick Stats -->
+<div class="grid">
+  <div class="card span-2">
+    <div class="card-header">
+      <h2>Revenue by Package</h2>
+    </div>
+    <div style="display: flex; gap: 16px; margin-top: 8px;">
+      <div style="flex: 1;">
+        <div style="display: flex; align-items: center; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.03);">
+          <span style="font-size: 13px; color: #ccc;">Essential Growth</span>
+          <span style="font-size: 13px; color: #888;">6 clients</span>
+        </div>
+        <div style="display: flex; align-items: center; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.03);">
+          <span style="font-size: 13px; color: #ccc;">Comprehensive Growth</span>
+          <span style="font-size: 13px; color: #888;">2 clients</span>
+        </div>
+        <div style="display: flex; align-items: center; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.03);">
+          <span style="font-size: 13px; color: #ccc;">Ultimate Builder</span>
+          <span style="font-size: 13px; color: #888;">1 client</span>
+        </div>
+        <div style="display: flex; align-items: center; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.03);">
+          <span style="font-size: 13px; color: #ccc;">Ads Only</span>
+          <span style="font-size: 13px; color: #888;">2 clients</span>
+        </div>
+        <div style="display: flex; align-items: center; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.03);">
+          <span style="font-size: 13px; color: #ccc;">Custom / Other</span>
+          <span style="font-size: 13px; color: #888;">4 clients</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card span-2">
+    <div class="card-header">
+      <h2>System Health</h2>
+      <span class="badge badge-green">All Systems Go</span>
+    </div>
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 8px;">
+      <div class="schedule-item" style="border: none; padding: 4px 0;">
+        <span style="font-size: 13px; color: #ccc;"><span class="status-dot dot-green"></span>Task Dispatcher</span>
+        <span style="font-size: 11px; color: #22C55E;">Running</span>
+      </div>
+      <div class="schedule-item" style="border: none; padding: 4px 0;">
+        <span style="font-size: 13px; color: #ccc;"><span class="status-dot dot-green"></span>Notion Sync</span>
+        <span style="font-size: 11px; color: #22C55E;">Running</span>
+      </div>
+      <div class="schedule-item" style="border: none; padding: 4px 0;">
+        <span style="font-size: 13px; color: #ccc;"><span class="status-dot dot-green"></span>Brain Dump</span>
+        <span style="font-size: 11px; color: #22C55E;">Running</span>
+      </div>
+      <div class="schedule-item" style="border: none; padding: 4px 0;">
+        <span style="font-size: 13px; color: #ccc;"><span class="status-dot dot-green"></span>Morning Briefing</span>
+        <span style="font-size: 11px; color: #22C55E;">Running</span>
+      </div>
+      <div class="schedule-item" style="border: none; padding: 4px 0;">
+        <span style="font-size: 13px; color: #ccc;"><span class="status-dot dot-green"></span>Nano Banana MCP</span>
+        <span style="font-size: 11px; color: #22C55E;">Connected</span>
+      </div>
+      <div class="schedule-item" style="border: none; padding: 4px 0;">
+        <span style="font-size: 13px; color: #ccc;"><span class="status-dot dot-green"></span>Canva MCP</span>
+        <span style="font-size: 11px; color: #22C55E;">Connected</span>
+      </div>
+      <div class="schedule-item" style="border: none; padding: 4px 0;">
+        <span style="font-size: 13px; color: #ccc;"><span class="status-dot dot-green"></span>Notion MCP</span>
+        <span style="font-size: 11px; color: #22C55E;">Connected</span>
+      </div>
+      <div class="schedule-item" style="border: none; padding: 4px 0;">
+        <span style="font-size: 13px; color: #ccc;"><span class="status-dot dot-yellow"></span>Google Drive</span>
+        <span style="font-size: 11px; color: #EAB308;">Pending Access</span>
+      </div>
+      <div class="schedule-item" style="border: none; padding: 4px 0;">
+        <span style="font-size: 13px; color: #ccc;"><span class="status-dot dot-gray"></span>GHL API</span>
+        <span style="font-size: 11px; color: #555;">Not Connected</span>
+      </div>
+      <div class="schedule-item" style="border: none; padding: 4px 0;">
+        <span style="font-size: 13px; color: #ccc;"><span class="status-dot dot-gray"></span>Manus AI</span>
+        <span style="font-size: 11px; color: #555;">Planned</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="footer">
+  <span>LaunchPad AI OS v1.0 — 9 Agents | 30 Skills | 4 Automations</span>
+  <span>Auto-refreshes every 5 minutes</span>
+  <span id="update-time"></span>
+</div>
+
+<script>
+function updateTime() {
+  const now = new Date();
+  const opts = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' };
+  document.getElementById('datetime').textContent = now.toLocaleDateString('en-US', opts);
+  document.getElementById('update-time').textContent = 'Last updated: ' + now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+}
+updateTime();
+setInterval(updateTime, 60000);
+</script>
+</body>
+</html>
