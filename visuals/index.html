@@ -1,0 +1,551 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LaunchPad AI OS — Agent Network Map</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: #0a0a0f;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    overflow: hidden;
+    color: #fff;
+  }
+  canvas { display: block; }
+
+  #title {
+    position: absolute;
+    top: 24px;
+    left: 32px;
+    z-index: 10;
+  }
+  #title h1 {
+    font-size: 22px;
+    font-weight: 700;
+    color: #fff;
+    letter-spacing: -0.5px;
+  }
+  #title p {
+    font-size: 13px;
+    color: #666;
+    margin-top: 4px;
+  }
+
+  #legend {
+    position: absolute;
+    bottom: 24px;
+    left: 32px;
+    z-index: 10;
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+  }
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    color: #888;
+  }
+  .legend-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+  }
+
+  #tooltip {
+    position: absolute;
+    display: none;
+    background: rgba(20, 20, 30, 0.95);
+    border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 12px;
+    padding: 16px 20px;
+    max-width: 320px;
+    z-index: 100;
+    backdrop-filter: blur(10px);
+    box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+  }
+  #tooltip h3 {
+    font-size: 15px;
+    font-weight: 600;
+    margin-bottom: 6px;
+  }
+  #tooltip .role {
+    font-size: 11px;
+    color: #888;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 8px;
+  }
+  #tooltip p {
+    font-size: 13px;
+    color: #aaa;
+    line-height: 1.5;
+  }
+  #tooltip .skills {
+    margin-top: 10px;
+    font-size: 12px;
+    color: #666;
+  }
+  #tooltip .skills span {
+    display: inline-block;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 4px;
+    padding: 2px 8px;
+    margin: 2px 4px 2px 0;
+    font-size: 11px;
+    color: #999;
+  }
+
+  #instructions {
+    position: absolute;
+    top: 24px;
+    right: 32px;
+    font-size: 12px;
+    color: #444;
+    text-align: right;
+    z-index: 10;
+  }
+</style>
+</head>
+<body>
+
+<div id="title">
+  <h1>LaunchPad AI OS</h1>
+  <p>Agent Network Map — How the AI Marketing Team Works Together</p>
+</div>
+
+<div id="instructions">
+  Hover over any node for details<br>
+  Drag nodes to rearrange
+</div>
+
+<div id="legend">
+  <div class="legend-item"><div class="legend-dot" style="background:#FF6B35"></div>Entry Points</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#4ECDC4"></div>Research Agents</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#A855F7"></div>Production Agents</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#F43F5E"></div>Quality Gate</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#22C55E"></div>Delivery</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#3B82F6"></div>Infrastructure</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#EAB308"></div>Knowledge</div>
+</div>
+
+<canvas id="canvas"></canvas>
+<div id="tooltip"></div>
+
+<script>
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+const tooltip = document.getElementById('tooltip');
+
+let W, H;
+function resize() {
+  W = canvas.width = window.innerWidth;
+  H = canvas.height = window.innerHeight;
+}
+resize();
+window.addEventListener('resize', resize);
+
+// Node definitions
+const nodes = [
+  // Entry points
+  { id: 'notion', label: 'Notion\nAI Team Board', x: 0.15, y: 0.18, r: 28, color: '#FF6B35', group: 'entry',
+    desc: 'Human team queues tasks here. Task Dispatcher checks hourly and routes to the right agent.',
+    role: 'Task Intake',
+    skills: ['Kanban Board', 'Task Form', 'Auto-Router'] },
+  { id: 'chat', label: 'Direct\nChat', x: 0.15, y: 0.5, r: 28, color: '#FF6B35', group: 'entry',
+    desc: 'Anthony tells Claude what he needs. Claude routes to the correct agent immediately.',
+    role: 'Direct Command',
+    skills: ['Any agent', 'Any skill'] },
+  { id: 'cron', label: 'Automated\nSchedule', x: 0.15, y: 0.82, r: 28, color: '#FF6B35', group: 'entry',
+    desc: 'Mac Mini runs scheduled jobs: Task Dispatcher (hourly), Notion Sync (2x/day), Brain Dump (daily).',
+    role: 'Automation Layer',
+    skills: ['launchd', 'Mon-Fri 9-5'] },
+
+  // Dispatcher
+  { id: 'dispatcher', label: 'Task\nDispatcher', x: 0.32, y: 0.4, r: 32, color: '#FF6B35', group: 'entry',
+    desc: 'Routes tasks to the right agent based on content type, keywords, and task notes. Runs hourly.',
+    role: 'Router',
+    skills: ['Auto-Router', 'Slack Alerts', 'Status Updates'] },
+
+  // Research agents
+  { id: 'researcher', label: 'Market\nResearcher', x: 0.42, y: 0.15, r: 26, color: '#4ECDC4', group: 'research',
+    desc: 'Competitive analysis, trend research, audience insights. Feeds findings to production agents.',
+    role: 'Research Agent',
+    skills: ['competitor-analysis', 'trend-research', 'audience-insights'] },
+  { id: 'strategist', label: 'Campaign\nStrategist', x: 0.48, y: 0.32, r: 26, color: '#4ECDC4', group: 'research',
+    desc: 'Campaign briefs, quarterly plans, messaging frameworks. Defines WHAT to create and WHY.',
+    role: 'Strategy Agent',
+    skills: ['campaign-brief', 'quarterly-planner', 'messaging-framework'] },
+  { id: 'analyst', label: 'Data\nAnalyst', x: 0.42, y: 0.85, r: 26, color: '#4ECDC4', group: 'research',
+    desc: 'Performance reports, dashboards, ROI analysis. Turns numbers into actionable insights.',
+    role: 'Analytics Agent',
+    skills: ['campaign-report', 'data-visualization'] },
+
+  // Production agents
+  { id: 'content', label: 'Content\nCreator', x: 0.58, y: 0.22, r: 30, color: '#A855F7', group: 'production',
+    desc: 'Writes all marketing copy: captions, blog posts, email sequences, newsletters, lead magnets.',
+    role: 'Production Agent',
+    skills: ['caption-writer', 'blog-writer', 'email-sequence', 'newsletter-builder', 'lead-magnet', 'content-ideation'] },
+  { id: 'designer', label: 'Creative\nDesigner', x: 0.62, y: 0.5, r: 34, color: '#A855F7', group: 'production',
+    desc: 'Produces FINISHED graphics using Nano Banana + Canva. Carousels, social posts, brand kits. AI owns the final deliverable.',
+    role: 'Production Agent — VISUAL',
+    skills: ['social-creative-designer', 'canva-designer', 'carousel-builder', 'brand-kit-builder', 'image-prompt-library'] },
+  { id: 'video', label: 'Video\nProduction', x: 0.58, y: 0.75, r: 26, color: '#A855F7', group: 'production',
+    desc: 'Shot lists, edit briefs, clip cutting direction. Works with human team (Kyle, Munzelle, Ral).',
+    role: 'Production Agent — VIDEO',
+    skills: ['shot-list-builder', 'edit-brief', 'clip-direction', 'content-ideation'] },
+
+  // Quality gate
+  { id: 'compliance', label: 'Brand\nCompliance', x: 0.78, y: 0.5, r: 32, color: '#F43F5E', group: 'quality',
+    desc: 'Reviews ALL content against client brand: voice, tone, colors, typography, messaging. Final gate before delivery.',
+    role: 'Quality Gate',
+    skills: ['brand-review'] },
+
+  // Delivery
+  { id: 'poster', label: 'Social Media\nPoster', x: 0.9, y: 0.5, r: 30, color: '#22C55E', group: 'delivery',
+    desc: 'Formats approved content into GHL Advanced CSV for bulk upload. Handles posting times, platform formatting.',
+    role: 'Delivery Agent',
+    skills: ['ghl-csv-formatter', 'platform-formatter'] },
+
+  // Support / Infrastructure
+  { id: 'onboarding', label: 'Client\nOnboarding', x: 0.32, y: 0.68, r: 22, color: '#3B82F6', group: 'infra',
+    desc: 'Builds client context notes from Notion, Drive, web, social. Makes clients "Agent Ready".',
+    role: 'Support Agent',
+    skills: ['client-context-builder', 'notion-sync', 'drive-scanner'] },
+  { id: 'notionsync', label: 'Notion\nBrain Sync', x: 0.25, y: 0.92, r: 20, color: '#3B82F6', group: 'infra',
+    desc: 'Syncs client data, meetings, and deliverables from Notion into the Brain. Runs 2x daily.',
+    role: 'Sync Agent',
+    skills: ['9:13 AM', '2:13 PM'] },
+  { id: 'braindump', label: 'Brain\nDump', x: 0.4, y: 0.95, r: 20, color: '#3B82F6', group: 'infra',
+    desc: 'Daily capture of everything built, refined, and learned. Commits code. Runs at 5:47 PM.',
+    role: 'Memory Agent',
+    skills: ['5:47 PM daily', 'Git commits'] },
+
+  // Knowledge
+  { id: 'brain', label: 'THE\nBRAIN', x: 0.5, y: 0.55, r: 38, color: '#EAB308', group: 'knowledge',
+    desc: '45 client context notes, 22 SOPs, team profiles, brand guidelines. Every agent reads from here before working.',
+    role: 'Knowledge Base (Obsidian)',
+    skills: ['Projects/', 'Context/', 'Skills/', 'Teams/', 'Daily/', 'Intelligence/'] },
+
+  // Future
+  { id: 'monitor', label: 'Performance\nMonitor', x: 0.9, y: 0.82, r: 20, color: '#444', group: 'future',
+    desc: 'PLANNED: Tracks posted content performance. Feeds insights back to research and production agents.',
+    role: 'Future Agent',
+    skills: ['Not built yet'] },
+];
+
+// Connections
+const edges = [
+  // Entry → Dispatcher
+  { from: 'notion', to: 'dispatcher', label: 'queued tasks', style: 'solid' },
+  { from: 'chat', to: 'dispatcher', label: 'direct request', style: 'solid' },
+  { from: 'cron', to: 'dispatcher', label: 'scheduled check', style: 'dashed' },
+
+  // Dispatcher → Research
+  { from: 'dispatcher', to: 'researcher', label: '', style: 'solid' },
+  { from: 'dispatcher', to: 'strategist', label: '', style: 'solid' },
+  { from: 'dispatcher', to: 'analyst', label: '', style: 'solid' },
+
+  // Dispatcher → Production
+  { from: 'dispatcher', to: 'content', label: '', style: 'solid' },
+  { from: 'dispatcher', to: 'designer', label: '', style: 'solid' },
+  { from: 'dispatcher', to: 'video', label: '', style: 'solid' },
+  { from: 'dispatcher', to: 'onboarding', label: '', style: 'solid' },
+
+  // Research → Production (insights flow)
+  { from: 'researcher', to: 'content', label: 'insights', style: 'dotted' },
+  { from: 'researcher', to: 'designer', label: 'trends', style: 'dotted' },
+  { from: 'strategist', to: 'content', label: 'briefs', style: 'solid' },
+  { from: 'strategist', to: 'designer', label: 'visual reqs', style: 'solid' },
+  { from: 'strategist', to: 'video', label: 'briefs', style: 'dotted' },
+  { from: 'analyst', to: 'strategist', label: 'data', style: 'dotted' },
+
+  // Production → Production (cross-collaboration)
+  { from: 'content', to: 'designer', label: 'copy for graphics', style: 'solid' },
+
+  // Production → Compliance
+  { from: 'content', to: 'compliance', label: '', style: 'solid' },
+  { from: 'designer', to: 'compliance', label: '', style: 'solid' },
+  { from: 'video', to: 'compliance', label: '', style: 'solid' },
+
+  // Compliance → Poster
+  { from: 'compliance', to: 'poster', label: 'approved', style: 'solid' },
+
+  // Brain connections (everyone reads from Brain)
+  { from: 'brain', to: 'researcher', label: '', style: 'glow' },
+  { from: 'brain', to: 'strategist', label: '', style: 'glow' },
+  { from: 'brain', to: 'content', label: '', style: 'glow' },
+  { from: 'brain', to: 'designer', label: '', style: 'glow' },
+  { from: 'brain', to: 'video', label: '', style: 'glow' },
+  { from: 'brain', to: 'compliance', label: '', style: 'glow' },
+  { from: 'brain', to: 'analyst', label: '', style: 'glow' },
+  { from: 'brain', to: 'poster', label: '', style: 'glow' },
+
+  // Sync feeds Brain
+  { from: 'notionsync', to: 'brain', label: 'syncs data', style: 'dashed' },
+  { from: 'braindump', to: 'brain', label: 'daily capture', style: 'dashed' },
+  { from: 'onboarding', to: 'brain', label: 'new clients', style: 'solid' },
+
+  // Cron triggers infra
+  { from: 'cron', to: 'notionsync', label: '', style: 'dashed' },
+  { from: 'cron', to: 'braindump', label: '', style: 'dashed' },
+
+  // Future: feedback loop
+  { from: 'poster', to: 'monitor', label: 'posted content', style: 'dashed' },
+  { from: 'monitor', to: 'researcher', label: 'performance data', style: 'dashed' },
+  { from: 'monitor', to: 'analyst', label: 'metrics', style: 'dashed' },
+];
+
+// Convert relative positions to absolute
+let nodeMap = {};
+nodes.forEach(n => {
+  n.px = n.x * W;
+  n.py = n.y * H;
+  n.vx = 0;
+  n.vy = 0;
+  nodeMap[n.id] = n;
+});
+
+// Interaction state
+let hoveredNode = null;
+let dragNode = null;
+let mouseX = 0, mouseY = 0;
+
+canvas.addEventListener('mousemove', (e) => {
+  mouseX = e.clientX;
+  mouseY = e.clientY;
+
+  if (dragNode) {
+    dragNode.px = e.clientX;
+    dragNode.py = e.clientY;
+    return;
+  }
+
+  hoveredNode = null;
+  for (let n of nodes) {
+    const dx = e.clientX - n.px;
+    const dy = e.clientY - n.py;
+    if (Math.sqrt(dx*dx + dy*dy) < n.r + 8) {
+      hoveredNode = n;
+      break;
+    }
+  }
+
+  if (hoveredNode) {
+    canvas.style.cursor = 'pointer';
+    const tt = tooltip;
+    tt.style.display = 'block';
+
+    let skillsHtml = '';
+    if (hoveredNode.skills && hoveredNode.skills.length) {
+      skillsHtml = '<div class="skills">' + hoveredNode.skills.map(s => `<span>${s}</span>`).join('') + '</div>';
+    }
+
+    tt.innerHTML = `
+      <h3 style="color:${hoveredNode.color}">${hoveredNode.label.replace('\n', ' ')}</h3>
+      <div class="role">${hoveredNode.role}</div>
+      <p>${hoveredNode.desc}</p>
+      ${skillsHtml}
+    `;
+
+    let tx = e.clientX + 16;
+    let ty = e.clientY - 16;
+    if (tx + 330 > W) tx = e.clientX - 340;
+    if (ty + 200 > H) ty = e.clientY - 200;
+    tt.style.left = tx + 'px';
+    tt.style.top = ty + 'px';
+  } else {
+    canvas.style.cursor = 'default';
+    tooltip.style.display = 'none';
+  }
+});
+
+canvas.addEventListener('mousedown', (e) => {
+  for (let n of nodes) {
+    const dx = e.clientX - n.px;
+    const dy = e.clientY - n.py;
+    if (Math.sqrt(dx*dx + dy*dy) < n.r + 8) {
+      dragNode = n;
+      break;
+    }
+  }
+});
+
+canvas.addEventListener('mouseup', () => { dragNode = null; });
+
+// Animation
+let time = 0;
+
+function drawEdge(from, to, style, label) {
+  const a = nodeMap[from];
+  const b = nodeMap[to];
+  if (!a || !b) return;
+
+  ctx.beginPath();
+
+  if (style === 'glow') {
+    // Subtle glow connection to Brain
+    const grad = ctx.createLinearGradient(a.px, a.py, b.px, b.py);
+    grad.addColorStop(0, 'rgba(234, 179, 8, 0.08)');
+    grad.addColorStop(0.5, 'rgba(234, 179, 8, 0.15)');
+    grad.addColorStop(1, 'rgba(234, 179, 8, 0.05)');
+    ctx.strokeStyle = grad;
+    ctx.lineWidth = 1;
+    ctx.setLineDash([]);
+  } else if (style === 'dashed') {
+    ctx.strokeStyle = 'rgba(255,255,255,0.12)';
+    ctx.lineWidth = 1.5;
+    ctx.setLineDash([6, 6]);
+  } else if (style === 'dotted') {
+    ctx.strokeStyle = 'rgba(255,255,255,0.1)';
+    ctx.lineWidth = 1;
+    ctx.setLineDash([2, 4]);
+  } else {
+    ctx.strokeStyle = 'rgba(255,255,255,0.18)';
+    ctx.lineWidth = 1.5;
+    ctx.setLineDash([]);
+  }
+
+  ctx.moveTo(a.px, a.py);
+  ctx.lineTo(b.px, b.py);
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  // Arrow
+  if (style !== 'glow') {
+    const angle = Math.atan2(b.py - a.py, b.px - a.px);
+    const dist = Math.sqrt((b.px-a.px)**2 + (b.py-a.py)**2);
+    const arrowX = a.px + Math.cos(angle) * (dist - b.r - 6);
+    const arrowY = a.py + Math.sin(angle) * (dist - b.r - 6);
+
+    ctx.beginPath();
+    ctx.fillStyle = style === 'dashed' ? 'rgba(255,255,255,0.12)' : 'rgba(255,255,255,0.25)';
+    ctx.moveTo(arrowX, arrowY);
+    ctx.lineTo(arrowX - 8 * Math.cos(angle - 0.4), arrowY - 8 * Math.sin(angle - 0.4));
+    ctx.lineTo(arrowX - 8 * Math.cos(angle + 0.4), arrowY - 8 * Math.sin(angle + 0.4));
+    ctx.closePath();
+    ctx.fill();
+  }
+
+  // Label
+  if (label) {
+    const mx = (a.px + b.px) / 2;
+    const my = (a.py + b.py) / 2;
+    ctx.font = '10px -apple-system, system-ui, sans-serif';
+    ctx.fillStyle = 'rgba(255,255,255,0.3)';
+    ctx.textAlign = 'center';
+    ctx.fillText(label, mx, my - 6);
+  }
+}
+
+function drawNode(n) {
+  const isHovered = hoveredNode === n;
+  const isFuture = n.group === 'future';
+
+  // Outer glow
+  if (isHovered) {
+    const glow = ctx.createRadialGradient(n.px, n.py, n.r, n.px, n.py, n.r * 2.5);
+    glow.addColorStop(0, n.color + '30');
+    glow.addColorStop(1, 'transparent');
+    ctx.beginPath();
+    ctx.arc(n.px, n.py, n.r * 2.5, 0, Math.PI * 2);
+    ctx.fillStyle = glow;
+    ctx.fill();
+  }
+
+  // Subtle pulse for Brain node
+  if (n.id === 'brain') {
+    const pulse = Math.sin(time * 0.02) * 0.15 + 0.85;
+    const glow = ctx.createRadialGradient(n.px, n.py, n.r * 0.5, n.px, n.py, n.r * 2);
+    glow.addColorStop(0, n.color + '18');
+    glow.addColorStop(1, 'transparent');
+    ctx.beginPath();
+    ctx.arc(n.px, n.py, n.r * 2 * pulse, 0, Math.PI * 2);
+    ctx.fillStyle = glow;
+    ctx.fill();
+  }
+
+  // Circle
+  ctx.beginPath();
+  ctx.arc(n.px, n.py, n.r, 0, Math.PI * 2);
+
+  if (isFuture) {
+    ctx.fillStyle = 'rgba(30,30,40,0.6)';
+    ctx.strokeStyle = '#333';
+    ctx.setLineDash([4, 4]);
+  } else {
+    const grad = ctx.createRadialGradient(n.px - n.r*0.3, n.py - n.r*0.3, 0, n.px, n.py, n.r);
+    grad.addColorStop(0, n.color + (isHovered ? 'ff' : 'cc'));
+    grad.addColorStop(1, n.color + (isHovered ? 'aa' : '66'));
+    ctx.fillStyle = grad;
+    ctx.strokeStyle = isHovered ? '#fff' : (n.color + '88');
+    ctx.setLineDash([]);
+  }
+
+  ctx.lineWidth = isHovered ? 2 : 1;
+  ctx.fill();
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  // Label
+  const lines = n.label.split('\n');
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+
+  const fontSize = n.r > 30 ? 11 : (n.r > 24 ? 10 : 9);
+  ctx.font = `600 ${fontSize}px -apple-system, system-ui, sans-serif`;
+  ctx.fillStyle = isFuture ? '#555' : (isHovered ? '#fff' : 'rgba(255,255,255,0.95)');
+
+  const lineHeight = fontSize + 2;
+  const startY = n.py - (lines.length - 1) * lineHeight / 2;
+  lines.forEach((line, i) => {
+    ctx.fillText(line, n.px, startY + i * lineHeight);
+  });
+}
+
+function draw() {
+  time++;
+  ctx.clearRect(0, 0, W, H);
+
+  // Background subtle grid
+  ctx.strokeStyle = 'rgba(255,255,255,0.02)';
+  ctx.lineWidth = 1;
+  for (let x = 0; x < W; x += 60) {
+    ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke();
+  }
+  for (let y = 0; y < H; y += 60) {
+    ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke();
+  }
+
+  // Draw edges (Brain connections first, then others)
+  edges.filter(e => e.style === 'glow').forEach(e => drawEdge(e.from, e.to, e.style, e.label));
+  edges.filter(e => e.style !== 'glow').forEach(e => drawEdge(e.from, e.to, e.style, e.label));
+
+  // Draw nodes
+  nodes.forEach(drawNode);
+
+  // Flow labels between sections
+  ctx.font = '10px -apple-system, system-ui, sans-serif';
+  ctx.fillStyle = 'rgba(255,255,255,0.15)';
+  ctx.textAlign = 'center';
+
+  requestAnimationFrame(draw);
+}
+
+// Handle resize
+window.addEventListener('resize', () => {
+  const oldW = W, oldH = H;
+  resize();
+  nodes.forEach(n => {
+    n.px = (n.px / oldW) * W;
+    n.py = (n.py / oldH) * H;
+  });
+});
+
+draw();
+</script>
+</body>
+</html>
