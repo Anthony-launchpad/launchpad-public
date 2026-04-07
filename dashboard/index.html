@@ -521,57 +521,125 @@ const monthProgress = Math.round((dayOfMonth / daysInMonth) * 100);
 const weekNum = Math.ceil(dayOfMonth / 7);
 document.getElementById('month-progress-badge').textContent = `Week ${weekNum} — ${monthProgress}% through month`;
 
-// Client health data: [name, package, adSpend, totalDeliverables, doneDeliverables]
+// Client health data from Notion Client Scorecard + Client Portals + Packages
+// [name, package, adSpend, expectedVideos, expectedGraphics, trackedTasks, doneTasks, taskBreakdown]
+// Package minimums: Essential=4v/8g, Comprehensive=8v/16g, Ultimate=12v/24g, AdsOnly=ads, Custom=varies
 const clients = [
-  ['Afshar Law', 'Essential Growth', '$1,500', 9, 3],
-  ["Arby's Food Truck", 'Essential Growth', '$500', 31, 25],
-  ['Brand With Us', 'Essential Growth', '—', 0, 0],
-  ['Continental Currency', 'Ultimate Builder', '$5,000', 0, 0],
-  ['DHDA', 'Ads Only', '—', 2, 2],
-  ['DRG', 'Ala Carte', '—', 6, 6],
-  ['Durango HVAC', 'Ads Only', '$500', 0, 0],
-  ['Matsuda Nadig Law', 'Comprehensive', '$4,000', 4, 4],
-  ['MN Van Law', 'Comprehensive', '$1,500', 0, 0],
-  ['Muller Masks', 'Essential Growth', '$1,000', 0, 0],
-  ['Sobel Westex', 'Essential Growth', '$2,000', 0, 0],
-  ['Taco Bell Cantinas', 'Essential Growth', '—', 0, 0],
-  ['Toro Taxes Franchise', 'Custom', '$8,400', 2, 2],
-  ['Upbeat Health', 'Custom', '—', 0, 0],
-  ['Launchpad', 'Custom', '—', 3, 2],
+  ['Afshar Law', 'Essential Growth', '$1,500', 4, 8,
+    {graphic: {status:'Done',assignee:'Cynthia'}, calendar: {status:'Not started',assignee:'Cynthia'}, video: {status:'Not started',assignee:'Abril'}, ads: null}],
+  ["Arby's Food Truck", 'Essential Growth', '$500', 4, 8,
+    {graphic: {status:'Not started',assignee:'Cynthia'}, calendar: {status:'Not started',assignee:'Cynthia'}, video: {status:'Not started',assignee:'Abril'}, ads: {status:'Not started',assignee:'Amber'}}],
+  ['Brand With Us', 'Essential Growth', '—', 4, 8,
+    {graphic: {status:'Not started',assignee:'Cynthia'}, calendar: {status:'Not started',assignee:'Cynthia'}, video: {status:'Not started',assignee:'Abril'}, ads: null}],
+  ['Continental Currency', 'Ultimate Builder', '$5,000', 12, 24,
+    {graphic: {status:'Brief',assignee:'Cynthia'}, calendar: {status:'Done',assignee:'Cynthia'}, video: null, ads: null}],
+  ['DHDA', 'Ads Only', '—', 0, 0,
+    {graphic: null, calendar: null, video: null, ads: null}],
+  ['DRG', 'Ala Carte', '—', 0, 0,
+    {graphic: null, calendar: null, video: null, ads: null}],
+  ['Durango HVAC', 'Ads Only', '$500', 0, 0,
+    {graphic: {status:'Not started',assignee:'Cynthia'}, calendar: {status:'Not started',assignee:'Cynthia'}, video: {status:'Not started',assignee:'Abril'}, ads: {status:'Done',assignee:'Amber'}}],
+  ['Matsuda Nadig Law', 'Comprehensive', '$4,000', 8, 16,
+    {graphic: {status:'Brief',assignee:'Cynthia'}, calendar: {status:'Not started',assignee:'Cynthia'}, video: {status:'Not started',assignee:'Abril'}, ads: {status:'Not started',assignee:'Amber'}}],
+  ['MN Van Law', 'Comprehensive', '$1,500', 8, 16,
+    {graphic: {status:'Brief',assignee:'Cynthia'}, calendar: {status:'Not started',assignee:'Cynthia'}, video: {status:'Not started',assignee:'Abril'}, ads: {status:'Done',assignee:'Amber'}}],
+  ['Muller Masks', 'Essential Growth', '$1,000', 4, 8,
+    {graphic: {status:'Brief',assignee:'Cynthia'}, calendar: {status:'Not started',assignee:'Cynthia'}, video: {status:'Not started',assignee:'Abril'}, ads: null}],
+  ['Sobel Westex', 'Essential Growth', '$2,000', 4, 8,
+    {graphic: {status:'Not started',assignee:'Cynthia'}, calendar: null, video: {status:'Not started',assignee:'Abril'}, ads: {status:'Not started',assignee:'Amber'}}],
+  ['Taco Bell Cantinas', 'Essential Growth', '—', 4, 8,
+    {graphic: {status:'Not started',assignee:'Cynthia'}, calendar: {status:'Not started',assignee:'Cynthia'}, video: {status:'In progress',assignee:'Abril'}, ads: null}],
+  ['Toro Taxes Franchise', 'Custom', '$8,400', 0, 0,
+    {graphic: {status:'Brief',assignee:'Cynthia'}, calendar: {status:'Not started',assignee:'Cynthia'}, video: null, ads: {status:'Not started',assignee:'Amber'}}],
+  ['Upbeat Health', 'Custom', '—', 0, 0,
+    {graphic: {status:'Brief',assignee:'Cynthia'}, calendar: {status:'Not started',assignee:'Cynthia'}, video: {status:'Not started',assignee:'Abril'}, ads: {status:'Not started',assignee:'Amber'}}],
+  ['Launchpad', 'Custom', '—', 0, 0,
+    {graphic: {status:'Not started',assignee:'Cynthia'}, calendar: {status:'Waiting for Client Review',assignee:'Cynthia'}, video: {status:'Not started',assignee:'Abril'}, ads: null}],
 ];
 
-function getHealthScore(total, done, monthPct) {
-  if (total === 0) return { pct: 0, color: '#F43F5E', label: 'No deliverables', status: 'red' };
-  const completionPct = Math.round((done / total) * 100);
-  // Compare completion to where we are in the month
-  const diff = completionPct - monthPct;
+const statusWeight = {
+  'Done': 1.0,
+  'Posted': 1.0,
+  'Waiting for Client Review': 0.8,
+  'In progress': 0.5,
+  'Brief': 0.25,
+  'Needs Revisions': 0.3,
+  'Not started': 0,
+};
+
+const statusColors = {
+  'Done': '#22C55E',
+  'Posted': '#22C55E',
+  'Waiting for Client Review': '#3B82F6',
+  'In progress': '#EAB308',
+  'Brief': '#A855F7',
+  'Needs Revisions': '#F43F5E',
+  'Not started': '#444',
+};
+
+function getClientHealth(tasks, monthPct) {
+  const tracked = Object.values(tasks).filter(t => t !== null);
+  if (tracked.length === 0) return { pct: 0, color: '#555', label: 'No tasks', status: 'gray', details: [] };
+
+  let totalWeight = 0;
+  const details = [];
+  tracked.forEach(t => {
+    const w = statusWeight[t.status] || 0;
+    totalWeight += w;
+    details.push(t);
+  });
+
+  const pct = Math.round((totalWeight / tracked.length) * 100);
+  // Compare progress to month position — later in month = stricter
+  const urgencyAdjust = monthPct > 50 ? -15 : monthPct > 25 ? -5 : 0;
+  const adjustedDiff = pct - monthPct + urgencyAdjust;
+
   let color, status;
-  if (diff >= -10) { color = '#22C55E'; status = 'green'; }
-  else if (diff >= -30) { color = '#EAB308'; status = 'yellow'; }
+  if (adjustedDiff >= -10) { color = '#22C55E'; status = 'green'; }
+  else if (adjustedDiff >= -30) { color = '#EAB308'; status = 'yellow'; }
   else { color = '#F43F5E'; status = 'red'; }
-  return { pct: completionPct, color, label: `${done}/${total} (${completionPct}%)`, status };
+
+  return { pct, color, label: `${Math.round(totalWeight)}/${tracked.length} tasks`, status, details };
+}
+
+function taskBadge(task, type) {
+  if (!task) return `<span style="font-size:10px;color:#333;">—</span>`;
+  const emoji = {graphic:'🎨',calendar:'📱',video:'🎥',ads:'📊'}[type];
+  const c = statusColors[task.status] || '#444';
+  return `<span style="font-size:10px;color:${c};" title="${type}: ${task.status} (${task.assignee})">${emoji}</span>`;
 }
 
 const tbody = document.getElementById('client-table');
-clients.forEach(([name, pkg, spend, total, done]) => {
-  const health = getHealthScore(total, done, monthProgress);
+clients.forEach(([name, pkg, spend, expV, expG, tasks]) => {
+  const health = getClientHealth(tasks, monthProgress);
+  const hasPackageMin = expV > 0 || expG > 0;
+  const packageNote = hasPackageMin ? `<span style="font-size:10px;color:#666;">${expV}v/${expG}g required</span>` : '';
+
   const tr = document.createElement('tr');
   tr.innerHTML = `
-    <td><strong style="color: #eee;">${name}</strong></td>
+    <td>
+      <strong style="color: #eee;">${name}</strong>
+      <div>${packageNote}</div>
+    </td>
     <td>${pkg}</td>
     <td>${spend}</td>
     <td>
+      <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 4px;">
+        ${taskBadge(tasks.graphic,'graphic')}
+        ${taskBadge(tasks.video,'video')}
+        ${taskBadge(tasks.calendar,'calendar')}
+        ${taskBadge(tasks.ads,'ads')}
+      </div>
       <div style="display: flex; align-items: center; gap: 8px;">
         <div class="progress-bar" style="flex: 1; height: 8px;">
           <div class="progress-fill" style="width: ${health.pct}%; background: ${health.color};"></div>
         </div>
-        <span style="font-size: 11px; color: ${health.color}; min-width: 65px; text-align: right;">${health.label}</span>
+        <span style="font-size: 11px; color: ${health.color}; min-width: 65px; text-align: right;">${health.pct}%</span>
       </div>
-      ${health.pct === 0 ? '<div style="font-size: 10px; color: #F43F5E; margin-top: 2px;">No deliverables tracked</div>' : ''}
     </td>
     <td>
       <span class="status-dot dot-${health.status}"></span>
-      ${health.status === 'green' ? 'On track' : health.status === 'yellow' ? 'Behind' : 'At risk'}
+      ${health.status === 'green' ? 'On track' : health.status === 'yellow' ? 'Behind' : health.status === 'red' ? 'At risk' : 'N/A'}
     </td>
   `;
   tbody.appendChild(tr);
